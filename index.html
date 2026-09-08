@@ -1,0 +1,1306 @@
+
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalendārs</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --primary: #0044ff;
+      --primary-soft: #e0e7ff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dfe7f5;
+      --today: #f59e0b;
+      --today-text: #fff;
+      --other-month: #cbd5e1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      padding-left: 180px;
+    }
+
+    .language-panel {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      top: auto;
+      transform: none;
+      width: 150px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.08);
+      padding: 14px 12px;
+      backdrop-filter: blur(4px);
+      z-index: 10;
+    }
+
+    .language-panel-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .language-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: var(--text);
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .language-option:hover {
+      background: var(--primary-soft);
+      transform: translateX(2px);
+    }
+
+    .language-option input {
+      accent-color: var(--primary);
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      flex-shrink: 0;
+    }
+
+    .calendar {
+      width: min(92vw, 760px);
+      height: min(92vh, 980px);
+      max-height: min(92vh, 980px);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 18px 45px rgba(79, 70, 229, 0.12);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    .month-label {
+      font-size: clamp(1.5rem, 2vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 68px;
+    }
+
+    .day-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 12px 0 18px;
+    }
+
+    .month-inline-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .selected-day {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 220px;
+      text-align: center;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border-radius: 10px;
+      padding: 8px 10px;
+      flex-wrap: wrap;
+    }
+
+    .date-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 6px 28px 6px 10px;
+      min-width: 62px;
+      text-align: center;
+      cursor: pointer;
+      background-image: linear-gradient(45deg, transparent 50%, var(--primary) 50%), linear-gradient(135deg, var(--primary) 50%, transparent 50%);
+      background-position: calc(100% - 14px) calc(50% - 2px), calc(100% - 9px) calc(50% - 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 700;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .key-btn {
+      border: 1px solid #c7d2fe;
+      border-bottom-width: 4px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f8faff 0%, #e2e8ff 100%);
+      color: var(--primary);
+      min-width: 52px;
+      min-height: 42px;
+      font-size: 1.2rem;
+      line-height: 1;
+      box-shadow: 0 4px 0 rgba(79, 70, 229, 0.15);
+    }
+
+    .key-btn:hover {
+      transform: translateY(-1px);
+      background: linear-gradient(180deg, #f5f7ff 0%, #dfe7ff 100%);
+    }
+
+    .key-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(79, 70, 229, 0.15);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: #dfe7ff;
+    }
+
+    .weekdays, .days {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .days {
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      height: 390px;
+      min-height: 390px;
+      flex-shrink: 0;
+    }
+
+    .weekdays {
+      margin-bottom: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .weekday {
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .day {
+      min-height: 0;
+      height: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      font-weight: 600;
+      position: relative;
+      user-select: none;
+      appearance: none;
+      cursor: pointer;
+      overflow: hidden;
+      padding: 6px 6px 8px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, z-index 0.15s ease;
+      transform-origin: center;
+      z-index: 1;
+    }
+
+    .day:hover {
+      transform: scale(1.20);
+      z-index: 3;
+      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.12);
+    }
+
+    .day-number {
+      font-size: 0.95rem;
+      line-height: 1.2;
+      font-weight: 700;
+      text-align: left;
+      margin-bottom: 4px;
+    }
+
+    .day-events {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3px;
+      margin-top: auto;
+      min-height: 0;
+      width: 100%;
+      overflow: hidden;
+      align-items: stretch;
+    }
+
+    .day-event-pill {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      padding: 2px 5px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.5);
+      color: inherit;
+      font-size: 0.62rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+
+    .day.other-month {
+      color: var(--other-month);
+      background: #f8fafc;
+    }
+
+    .day.today {
+      background: var(--today);
+      color: var(--today-text);
+      border-color: var(--today);
+      box-shadow: 0 10px 18px rgba(245, 158, 11, 0.3);
+    }
+
+    .day.selected {
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+    }
+
+    .event-panel {
+      margin-top: 20px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+      /* Pagarināt notikumu logu uz leju: maini šeit min-height / flex-basis vai kalendāra augstumu */
+      min-height: 220px;
+    }
+
+    .color-controls {
+      width: fit-content;
+      max-width: 100%;
+      margin-left: 0;
+      margin-right: auto;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #f8faff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-height: 72px;
+    }
+
+    .color-picker-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .color-controls label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .color-controls input[type="color"] {
+      width: 58px;
+      height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: transparent;
+      padding: 2px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .recent-colors {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 42px;
+      max-width: min(42vw, 240px);
+    }
+
+    .recent-color-btn {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      border: 2px solid rgba(15, 23, 42, 0.08);
+      border-radius: 8px;
+      padding: 0;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .recent-color-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(15, 23, 42, 0.22);
+    }
+
+    .recent-color-btn.empty {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-style: dashed;
+      opacity: 0.8;
+    }
+
+    .secondary-btn {
+      background: #eef2ff;
+      color: var(--primary);
+    }
+
+    .event-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .event-panel h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .add-event-btn {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .event-list {
+      list-style: none;
+      padding: 0 4px 0 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+      max-height: 260px;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+      flex: 1 1 auto;
+    }
+
+    .event-list li {
+      --event-item-height: clamp(48px, 5vw, 72px);
+      background: var(--primary-soft);
+      border-radius: 12px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: var(--event-item-height);
+      max-height: var(--event-item-height);
+    }
+
+    .event-text {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .delete-event-btn {
+      --delete-btn-size: min(44%, calc(var(--event-item-height) * 0.9));
+      background: rgba(79, 70, 229, 0.08);
+      color: var(--primary);
+      border: none;
+      border-radius: 8px;
+      width: var(--delete-btn-size);
+      height: var(--delete-btn-size);
+      aspect-ratio: 1;
+      font-size: clamp(1.2rem, calc(var(--event-item-height) * 0.36), 2.2rem);
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+      margin: 0;
+      align-self: center;
+    }
+
+    .event-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 50;
+    }
+
+    .event-modal.show {
+      display: flex;
+    }
+
+    /* KOMENTĀRA LOGA IZMĒRS: maini width un padding, lai pats pielāgotu loga lielumu */
+    .event-modal-content {
+      width: min(90vw, 520px); /* maini 520px uz savu vēlamo platumu */
+      background: var(--panel);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+      padding: 20px;
+    }
+
+    .event-modal-content h3 {
+      margin: 0 0 12px;
+      font-size: 1.2rem;
+    }
+
+    .event-modal-content textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px 14px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font: inherit;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .event-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding-left: 0;
+        padding-top: 90px;
+      }
+
+      .language-panel {
+        position: static;
+        transform: none;
+        width: min(88vw, 260px);
+        margin: 0 auto 16px;
+      }
+
+      .calendar {
+        padding: 16px;
+        height: min(88vh, 680px);
+      }
+
+      .days {
+        height: 330px;
+        min-height: 330px;
+        grid-template-rows: repeat(6, minmax(0, 1fr));
+      }
+
+      .day {
+        font-size: 0.9rem;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .nav {
+        justify-content: space-between;
+      }
+
+      .event-list {
+        max-height: 140px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="language-panel" aria-label="Language selection">
+    <div class="language-panel-title" id="languagePanelTitle">Language</div>
+    <label class="language-option">
+      <input type="radio" name="language" value="en" checked />
+      <span data-lang-label="en">English</span>
+    </label>
+    <label class="language-option">
+      <input type="radio" name="language" value="lv" />
+      <span data-lang-label="lv">Latvian</span>
+    </label>
+    <label class="language-option">
+      <input type="radio" name="language" value="ru" />
+      <span data-lang-label="ru">Russian</span>
+    </label>
+  </aside>
+
+  <div class="event-modal" id="eventModal" aria-hidden="true">
+    <div class="event-modal-content" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+      <h3 id="eventModalTitle">Notikums</h3>
+      <textarea id="eventTextInput" placeholder="Ievadi notikuma tekstu..." aria-label="Notikuma teksts"></textarea>
+      <div class="event-modal-actions">
+        <button type="button" id="cancelEventBtn" class="secondary-btn">Atcelt</button>
+        <button type="button" id="saveEventBtn">Saglabāt</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar">
+    <div class="header">
+      <div class="month-label" id="monthLabel"></div>
+      <div class="nav">
+        <button type="button" id="todayBtn" aria-label="Šodien">Šodien</button>
+      </div>
+    </div>
+
+    <div class="month-inline-nav" aria-label="Mēneša izvēle">
+      <button type="button" class="key-btn" id="prevMonthInlineBtn" aria-label="Iepriekšējais mēnesis">←</button>
+      <div class="selected-day" id="selectedDayLabel" aria-label="Datuma izvēle"></div>
+      <button type="button" class="key-btn" id="nextMonthInlineBtn" aria-label="Nākamais mēnesis">→</button>
+    </div>
+
+    <div class="weekdays" id="weekdays"></div>
+    <div class="days" id="days"></div>
+
+    <!-- Notikumu logs / paneļa sadaļa zem kalendāra: šeit tiek rādīti dienas notikumi un pievienošanas dialogs -->
+    <div class="event-panel">
+      <div class="color-controls">
+        <div class="color-picker-group">
+          <label for="dayColorPicker">Dienas krāsa</label>
+          <input type="color" id="dayColorPicker" value="#0044ff" aria-label="Izvēlēties dienas krāsu" />
+          <div class="recent-colors" id="recentColors" aria-label="Nesen lietotās krāsas"></div>
+        </div>
+        <button type="button" id="applyDayColorBtn">Uzlikt krāsu</button>
+        <button type="button" id="clearDayColorBtn" class="secondary-btn">Noņemt krāsu</button>
+      </div>
+
+      <div class="event-header">
+        <h3 id="eventSectionTitle">Notikumi</h3>
+        <button type="button" id="addEventBtn" class="add-event-btn" aria-label="Pievienot notikumu">+ Notikums</button>
+      </div>
+      <ul class="event-list" id="eventList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const monthLabel = document.getElementById('monthLabel');
+    const selectedDayLabel = document.getElementById('selectedDayLabel');
+    const weekdaysEl = document.getElementById('weekdays');
+    const daysEl = document.getElementById('days');
+    const prevMonthInlineBtn = document.getElementById('prevMonthInlineBtn');
+    const nextMonthInlineBtn = document.getElementById('nextMonthInlineBtn');
+    const todayBtn = document.getElementById('todayBtn');
+    const addEventBtn = document.getElementById('addEventBtn');
+    const eventListEl = document.getElementById('eventList');
+    const eventModal = document.getElementById('eventModal');
+    const eventTextInput = document.getElementById('eventTextInput');
+    const saveEventBtn = document.getElementById('saveEventBtn');
+    const cancelEventBtn = document.getElementById('cancelEventBtn');
+    const dayColorPicker = document.getElementById('dayColorPicker');
+    const applyDayColorBtn = document.getElementById('applyDayColorBtn');
+    const clearDayColorBtn = document.getElementById('clearDayColorBtn');
+    const recentColorsEl = document.getElementById('recentColors');
+
+    let eventEditorIndex = null;
+
+    const monthNamesByLang = {
+      lv: ['Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'],
+      en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+    };
+    const weekdaysByLang = {
+      lv: ['P', 'O', 'T', 'C', 'P', 'S', 'Sv'],
+      en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+      ru: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    };
+    const translations = {
+      lv: {
+        languagePanelTitle: 'Valoda',
+        today: 'Šodien',
+        languageNames: {
+          en: 'Angļu valoda',
+          lv: 'Latviešu valoda',
+          ru: 'Krievu valoda'
+        },
+        dayColor: 'Dienas krāsa',
+        applyDayColor: 'Uzlikt krāsu',
+        clearDayColor: 'Noņemt krāsu',
+        events: 'Notikumi',
+        addEvent: 'Notikums',
+        noEvents: 'Nav notikumu izvēlētajai dienai.',
+        modalTitle: 'Notikums',
+        placeholder: 'Ievadi notikuma tekstu...',
+        cancel: 'Atcelt',
+        save: 'Saglabāt',
+        ariaAddEvent: 'Pievienot notikumu',
+        noRecentColors: 'Nav nesen lietotu krāsu',
+        useColor: 'Izmantot krāsu {color}'
+      },
+      en: {
+        languagePanelTitle: 'Language',
+        today: 'Today',
+        languageNames: {
+          en: 'English',
+          lv: 'Latvian',
+          ru: 'Russian'
+        },
+        dayColor: 'Day color',
+        applyDayColor: 'Apply color',
+        clearDayColor: 'Remove color',
+        events: 'Events',
+        addEvent: 'Event',
+        noEvents: 'No events for the selected day.',
+        modalTitle: 'Event',
+        placeholder: 'Enter event text...',
+        cancel: 'Cancel',
+        save: 'Save',
+        ariaAddEvent: 'Add event',
+        noRecentColors: 'No recent colors',
+        useColor: 'Use color {color}'
+      },
+      ru: {
+        languagePanelTitle: 'Язык',
+        today: 'Сегодня',
+        languageNames: {
+          en: 'Английский',
+          lv: 'Латышский',
+          ru: 'Русский'
+        },
+        dayColor: 'Цвет дня',
+        applyDayColor: 'Применить цвет',
+        clearDayColor: 'Убрать цвет',
+        events: 'События',
+        addEvent: 'Событие',
+        noEvents: 'Нет событий для выбранного дня.',
+        modalTitle: 'Событие',
+        placeholder: 'Введите текст события...',
+        cancel: 'Отмена',
+        save: 'Сохранить',
+        ariaAddEvent: 'Добавить событие',
+        noRecentColors: 'Нет последних цветов',
+        useColor: 'Использовать цвет {color}'
+      }
+    };
+    const eventsKey = 'calendar-events-v1';
+    const dayColorsKey = 'calendar-day-colors-v1';
+    const recentColorsKey = 'calendar-recent-colors-v1';
+
+    let currentLanguage = 'en';
+    let currentDate = new Date();
+    let selectedDate = new Date();
+
+    function getRecentColors() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(recentColorsKey) || '[]');
+        return Array.isArray(saved) ? saved.filter(color => typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color)) : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveRecentColors(colors) {
+      localStorage.setItem(recentColorsKey, JSON.stringify(colors));
+    }
+
+    function renderRecentColors() {
+      const recentColors = getRecentColors();
+      const noRecentColorsText = translations[currentLanguage]?.noRecentColors || 'No recent colors';
+      const useColorTemplate = translations[currentLanguage]?.useColor || 'Use color {color}';
+
+      if (!recentColors.length) {
+        recentColorsEl.innerHTML = `<button type="button" class="recent-color-btn empty" aria-label="${noRecentColorsText}" title="${noRecentColorsText}"></button>`;
+        return;
+      }
+
+      recentColorsEl.innerHTML = recentColors.map(color => {
+        const label = useColorTemplate.replace('{color}', color);
+        return `
+          <button
+            type="button"
+            class="recent-color-btn"
+            style="background: ${color};"
+            aria-label="${label}"
+            title="${label}"
+            data-color="${color}"
+          ></button>
+        `;
+      }).join('');
+
+      recentColorsEl.querySelectorAll('.recent-color-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const color = button.dataset.color;
+          if (!color) return;
+          dayColorPicker.value = color;
+          setSelectedDayColor(color);
+        });
+      });
+    }
+
+    function addRecentColor(color) {
+      if (!color || !/^#[0-9a-fA-F]{6}$/.test(color)) {
+        return;
+      }
+
+      const normalized = color.toLowerCase();
+      const recentColors = getRecentColors();
+      const filteredColors = recentColors.filter(item => item.toLowerCase() !== normalized);
+      filteredColors.unshift(normalized);
+      saveRecentColors(filteredColors.slice(0, 8));
+      renderRecentColors();
+    }
+
+    function renderWeekdays() {
+      const weekdayNames = weekdaysByLang[currentLanguage] || weekdaysByLang.lv;
+      weekdaysEl.innerHTML = weekdayNames.map(day => `<div class="weekday">${day}</div>`).join('');
+    }
+
+    function getEvents() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(eventsKey) || '{}');
+        return saved && typeof saved === 'object' ? saved : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveEvents(events) {
+      localStorage.setItem(eventsKey, JSON.stringify(events));
+    }
+
+    function formatDate(date) {
+      return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getDayColors() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(dayColorsKey) || '{}');
+        return saved && typeof saved === 'object' ? saved : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveDayColors(dayColors) {
+      localStorage.setItem(dayColorsKey, JSON.stringify(dayColors));
+    }
+
+    function getDayColor(date) {
+      return getDayColors()[toEventKey(date)] || null;
+    }
+
+    function setSelectedDayColor(color) {
+      const dayColors = getDayColors();
+      dayColors[toEventKey(selectedDate)] = color;
+      saveDayColors(dayColors);
+      addRecentColor(color);
+      renderCalendar();
+    }
+
+    function clearSelectedDayColor() {
+      const dayColors = getDayColors();
+      delete dayColors[toEventKey(selectedDate)];
+      saveDayColors(dayColors);
+      renderCalendar();
+    }
+
+    function getContrastText(hexColor) {
+      const clean = hexColor.replace('#', '');
+      const r = parseInt(clean.substring(0, 2), 16);
+      const g = parseInt(clean.substring(2, 4), 16);
+      const b = parseInt(clean.substring(4, 6), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.6 ? '#111827' : '#ffffff';
+    }
+
+    function renderEvents() {
+      const events = getEvents();
+      const key = toEventKey(selectedDate);
+      const items = events[key] || [];
+
+      if (!items.length) {
+        eventListEl.innerHTML = `<li>${translations[currentLanguage].noEvents}</li>`;
+        return;
+      }
+
+      eventListEl.innerHTML = items.map((event, index) => `
+        <li>
+          <button type="button" class="event-text" data-index="${index}">${event}</button>
+          <button type="button" class="delete-event-btn" data-index="${index}" aria-label="Dzēst notikumu">×</button>
+        </li>
+      `).join('');
+
+      eventListEl.querySelectorAll('.event-text').forEach(button => {
+        button.addEventListener('click', () => openEventEditor(Number(button.dataset.index)));
+      });
+
+      eventListEl.querySelectorAll('.delete-event-btn').forEach(button => {
+        button.addEventListener('click', () => deleteEvent(Number(button.dataset.index)));
+      });
+    }
+
+    function toEventKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function openEventEditor(index = null) {
+      const events = getEvents();
+      const key = toEventKey(selectedDate);
+      const items = events[key] || [];
+      eventEditorIndex = index;
+      eventTextInput.value = index === null ? '' : (items[index] || '');
+      eventModal.classList.add('show');
+      eventModal.setAttribute('aria-hidden', 'false');
+      eventTextInput.focus();
+      eventTextInput.select();
+    }
+
+    function closeEventEditor() {
+      eventModal.classList.remove('show');
+      eventModal.setAttribute('aria-hidden', 'true');
+      eventEditorIndex = null;
+      eventTextInput.value = '';
+    }
+
+    function saveEventFromEditor() {
+      const cleanedEvent = eventTextInput.value.trim();
+      const events = getEvents();
+      const key = toEventKey(selectedDate);
+      events[key] = events[key] || [];
+
+      if (eventEditorIndex === null) {
+        if (!cleanedEvent) {
+          closeEventEditor();
+          return;
+        }
+        events[key].push(cleanedEvent);
+      } else {
+        if (!cleanedEvent) {
+          events[key].splice(eventEditorIndex, 1);
+        } else {
+          events[key][eventEditorIndex] = cleanedEvent;
+        }
+      }
+
+      if (!events[key].length) {
+        delete events[key];
+      }
+
+      saveEvents(events);
+      closeEventEditor();
+      renderEvents();
+      renderCalendar();
+    }
+
+    function deleteEvent(index) {
+      const events = getEvents();
+      const key = toEventKey(selectedDate);
+      if (!events[key]) return;
+
+      events[key].splice(index, 1);
+      if (!events[key].length) {
+        delete events[key];
+      }
+      saveEvents(events);
+      renderEvents();
+      renderCalendar();
+    }
+
+    function startEventInput() {
+      openEventEditor();
+    }
+
+    function getDaysInMonth(year, monthIndex) {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+
+    function updateSelectedDateFromControls() {
+      const daySelect = document.getElementById('dateDaySelect');
+      const monthSelect = document.getElementById('dateMonthSelect');
+      const yearSelect = document.getElementById('dateYearSelect');
+
+      if (!daySelect || !monthSelect || !yearSelect) {
+        return;
+      }
+
+      const newYear = Number(yearSelect.value);
+      const newMonth = Number(monthSelect.value);
+      const maxDay = getDaysInMonth(newYear, newMonth);
+      const newDay = Math.min(Number(daySelect.value), maxDay);
+
+      selectedDate = new Date(newYear, newMonth, newDay);
+      currentDate = new Date(newYear, newMonth, 1);
+      renderCalendar();
+      renderEvents();
+    }
+
+    function renderSelectedDayLabel() {
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth();
+      const day = selectedDate.getDate();
+      const maxYear = 2100;
+      const minYear = 1900;
+      const monthNames = monthNamesByLang[currentLanguage] || monthNamesByLang.lv;
+
+      selectedDayLabel.innerHTML = `
+        <select id="dateDaySelect" class="date-select" aria-label="Diena">
+          ${Array.from({ length: getDaysInMonth(year, month) }, (_, index) => `
+            <option value="${index + 1}" ${index + 1 === day ? 'selected' : ''}>${index + 1}</option>
+          `).join('')}
+        </select>
+        <select id="dateMonthSelect" class="date-select" aria-label="Mēnesis">
+          ${monthNames.map((name, index) => `
+            <option value="${index}" ${index === month ? 'selected' : ''}>${name}</option>
+          `).join('')}
+        </select>
+        <select id="dateYearSelect" class="date-select" aria-label="Gads">
+          ${Array.from({ length: maxYear - minYear + 1 }, (_, index) => {
+            const optionYear = minYear + index;
+            return `<option value="${optionYear}" ${optionYear === year ? 'selected' : ''}>${optionYear}</option>`;
+          }).join('')}
+        </select>
+      `;
+
+      const daySelect = document.getElementById('dateDaySelect');
+      const monthSelect = document.getElementById('dateMonthSelect');
+      const yearSelect = document.getElementById('dateYearSelect');
+
+      daySelect.addEventListener('change', updateSelectedDateFromControls);
+      monthSelect.addEventListener('change', updateSelectedDateFromControls);
+      yearSelect.addEventListener('change', updateSelectedDateFromControls);
+
+      const selectedColor = getDayColor(selectedDate);
+      dayColorPicker.value = selectedColor || '#0044ff';
+    }
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+      const firstDayWeekday = (firstDayOfMonth.getDay() + 6) % 7;
+      const totalDays = lastDayOfMonth.getDate();
+      const prevMonthLastDate = new Date(year, month, 0).getDate();
+      const monthNames = monthNamesByLang[currentLanguage] || monthNamesByLang.lv;
+
+      monthLabel.textContent = `${monthNames[month]} ${year}`;
+      renderSelectedDayLabel();
+      daysEl.innerHTML = '';
+
+      const startOffset = firstDayWeekday;
+      const totalCells = Math.ceil((startOffset + totalDays) / 7) * 7;
+
+      for (let i = 0; i < totalCells; i++) {
+        const dayNumber = i - startOffset + 1;
+        const date = new Date(year, month, dayNumber);
+
+        const dayEl = document.createElement('button');
+        dayEl.type = 'button';
+        dayEl.className = 'day';
+
+        if (dayNumber <= 0) {
+          dayEl.classList.add('other-month');
+          dayEl.innerHTML = `<span class="day-number">${prevMonthLastDate + dayNumber}</span>`;
+        } else if (dayNumber > totalDays) {
+          dayEl.classList.add('other-month');
+          dayEl.innerHTML = `<span class="day-number">${dayNumber - totalDays}</span>`;
+        } else {
+          const eventItems = getEvents()[toEventKey(date)] || [];
+          const previewItems = eventItems.length > 1
+            ? [`${eventItems[0]} +${eventItems.length - 1}`]
+            : eventItems.slice(0, 1);
+
+          dayEl.innerHTML = `
+            <span class="day-number">${dayNumber}</span>
+            ${previewItems.length ? `<div class="day-events">${previewItems.map(event => `<span class="day-event-pill">${escapeHtml(event)}</span>`).join('')}</div>` : ''}
+          `;
+
+          const customColor = getDayColor(date);
+          if (customColor) {
+            dayEl.style.backgroundColor = customColor;
+            dayEl.style.borderColor = customColor;
+            dayEl.style.color = getContrastText(customColor);
+          }
+
+          if (isSameDay(date, new Date())) {
+            dayEl.classList.add('today');
+          }
+
+          if (isSameDay(date, selectedDate)) {
+            dayEl.classList.add('selected');
+          }
+        }
+
+        dayEl.addEventListener('click', () => {
+          if (dayNumber <= 0 || dayNumber > totalDays) {
+            return;
+          }
+          selectedDate = date;
+          currentDate = new Date(year, month, 1);
+          renderCalendar();
+          renderEvents();
+        });
+
+        daysEl.appendChild(dayEl);
+      }
+    }
+
+    function isSameDay(date1, date2) {
+      return date1.getFullYear() === date2.getFullYear() &&
+        date1.getMonth() === date2.getMonth() &&
+        date1.getDate() === date2.getDate();
+    }
+
+    function handleKeyboardNavigation(event) {
+      if (eventModal.classList.contains('show')) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        moveSelectedDate(-1);
+        return;
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        moveSelectedDate(1);
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        moveSelectedMonth(-1);
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        moveSelectedMonth(1);
+        return;
+      }
+
+      if (event.key === 'PageUp') {
+        event.preventDefault();
+        moveSelectedMonth(-1);
+        return;
+      }
+
+      if (event.key === 'PageDown') {
+        event.preventDefault();
+        moveSelectedMonth(1);
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        startEventInput();
+      }
+    }
+
+    function moveSelectedDate(days) {
+      const nextDate = new Date(selectedDate);
+      nextDate.setDate(nextDate.getDate() + days);
+      selectedDate = nextDate;
+      currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+      renderCalendar();
+      renderEvents();
+    }
+
+    function moveSelectedMonth(monthOffset) {
+      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + monthOffset, 1);
+      selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      renderCalendar();
+      renderEvents();
+    }
+
+    function updateLanguageLabels() {
+      const panelTitle = document.getElementById('languagePanelTitle');
+      if (panelTitle) {
+        panelTitle.textContent = translations[currentLanguage]?.languagePanelTitle || 'Language';
+      }
+
+      document.querySelectorAll('[data-lang-label]').forEach(label => {
+        const lang = label.dataset.langLabel;
+        const fixedNames = {
+          en: 'English',
+          lv: 'Latvian',
+          ru: 'Russian'
+        };
+        label.textContent = fixedNames[lang] || label.textContent;
+      });
+
+      todayBtn.textContent = translations[currentLanguage]?.today || 'Today';
+      addEventBtn.textContent = `+ ${translations[currentLanguage]?.addEvent || 'Event'}`;
+      addEventBtn.setAttribute('aria-label', translations[currentLanguage]?.ariaAddEvent || 'Add event');
+      document.getElementById('eventSectionTitle').textContent = translations[currentLanguage]?.events || 'Events';
+      document.getElementById('eventModalTitle').textContent = translations[currentLanguage]?.modalTitle || 'Event';
+      eventTextInput.placeholder = translations[currentLanguage]?.placeholder || 'Enter event text...';
+      cancelEventBtn.textContent = translations[currentLanguage]?.cancel || 'Cancel';
+      saveEventBtn.textContent = translations[currentLanguage]?.save || 'Save';
+      const dayColorLabel = document.querySelector('label[for="dayColorPicker"]');
+      if (dayColorLabel) {
+        dayColorLabel.textContent = translations[currentLanguage]?.dayColor || 'Day color';
+      }
+      applyDayColorBtn.textContent = translations[currentLanguage]?.applyDayColor || 'Apply color';
+      clearDayColorBtn.textContent = translations[currentLanguage]?.clearDayColor || 'Remove color';
+      document.documentElement.lang = currentLanguage;
+    }
+
+    function applyLanguage(language) {
+      currentLanguage = language;
+      const inputs = document.querySelectorAll('input[name="language"]');
+      inputs.forEach(input => {
+        input.checked = input.value === language;
+      });
+      updateLanguageLabels();
+      renderWeekdays();
+      renderCalendar();
+      renderEvents();
+    }
+
+    function bindControls() {
+      prevMonthInlineBtn.addEventListener('click', () => {
+        moveSelectedMonth(-1);
+      });
+
+      nextMonthInlineBtn.addEventListener('click', () => {
+        moveSelectedMonth(1);
+      });
+
+      todayBtn.addEventListener('click', () => {
+        currentDate = new Date();
+        selectedDate = new Date();
+        renderCalendar();
+        renderEvents();
+      });
+
+      addEventBtn.addEventListener('click', startEventInput);
+      saveEventBtn.addEventListener('click', saveEventFromEditor);
+      cancelEventBtn.addEventListener('click', closeEventEditor);
+      eventModal.addEventListener('click', (event) => {
+        if (event.target === eventModal) {
+          closeEventEditor();
+        }
+      });
+      eventTextInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          saveEventFromEditor();
+          return;
+        }
+
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault();
+          saveEventFromEditor();
+        }
+      });
+      applyDayColorBtn.addEventListener('click', () => {
+        const selectedColor = dayColorPicker.value;
+        setSelectedDayColor(selectedColor);
+      });
+      clearDayColorBtn.addEventListener('click', () => {
+        clearSelectedDayColor();
+      });
+      document.addEventListener('keydown', handleKeyboardNavigation);
+      document.querySelectorAll('input[name="language"]').forEach(input => {
+        input.addEventListener('change', (event) => {
+          if (event.target.checked) {
+            applyLanguage(event.target.value);
+          }
+        });
+      });
+    }
+
+    bindControls();
+    currentLanguage = 'en';
+    const inputs = document.querySelectorAll('input[name="language"]');
+    inputs.forEach(input => {
+      input.checked = input.value === currentLanguage;
+    });
+    renderWeekdays();
+    renderRecentColors();
+    updateLanguageLabels();
+    renderCalendar();
+    renderEvents();
+  </script>
+</body>
+</html>
